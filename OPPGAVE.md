@@ -2,7 +2,7 @@
 
 **Emne:** DATA1500 Databaser
 
-**Innleveringsfrist:** søndag 1. mars 2026 kl. 23:59 i Canvas
+**Innleveringsfrist:** søndag 1. mars 2026 kl. 23:59 i Canvas (se instruksjoner i README.md)
 
 **Vurdering:** Bestått / Ikke bestått
 
@@ -139,15 +139,7 @@ I denne delen skal du skrive SQL-spørringer for å hente ut informasjon fra dat
 
 **Oppgave 5.8:** Lag en spørring som viser hvilke sykler, med informasjon om kunden, som ikke er levert tilbake etter ett døgn.
 
-**Automatisk testing:**
 
-For å teste om SQL-spørringene dine er korrekte, kan du kjøre følgende kommando fra terminalen i prosjektmappen:
-
-```bash
-docker-compose exec postgres psql -U admin -d oblig01 -f test-scripts/test-queries.sql
-```
-
-Denne kommandoen kjører `test-queries.sql`-skriptet, som inneholder både dine spørringer og tester som validerer resultatene. Du vil få tilbakemelding i terminalen om testene bestås eller ikke.
 
 ### Del 6: Bonusoppgaver (Valgfri)
 
