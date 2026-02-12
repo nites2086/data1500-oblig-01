@@ -14,18 +14,18 @@
 
 **Identifiserte entiteter:**
 
-[
+
 1. Kunde 
 2. Stasjon
-3. Lås
+3. Laas
 4. Sykkel 
 5. Utleie
-]
+
    
 
 **Attributter for hver entitet:**
 
-[1. Kunde: Dette er minimumet som trengs for å identifisere kunden og knytte utleier til riktig person.
+1. Kunde: Dette er minimumet som trengs for å identifisere kunden og knytte utleier til riktig person.
 - kunde_id
 - mobilnummer
 - epost
@@ -37,7 +37,7 @@
    - navn
    - adresse
 
-3. Lås: Dette trengs fordi innlevering registreres ved å feste sykkelen i en lås.
+3. Laas: Dette trengs fordi innlevering registreres ved å feste sykkelen i en lås.
    - laas_id
    - stasjon_id
 
@@ -54,14 +54,14 @@
    - slutt_tid
    - beløp
    - start_stasjon
-   - slutt_stasjon]
+   - slutt_stasjon
 
 
 ### Oppgave 1.2: Datatyper og `CHECK`-constraints
 
 **Valgte datatyper og begrunnelser:**
 
-[
+
 1. Kunde
 - kunde_id SERIAL: serial gir automatisk økende ID, som gjør hver kunde unik og vil være stabil å referere til fra andre tabeller
 - mobilnummer VARCHAR(15): Lengde 15 dekker internasjonale nummer. 
@@ -93,7 +93,7 @@
 
 **`CHECK`-constraints:**
 
-[1. Kunde 
+1. Kunde 
 - kunde_id SERIAL
 - mobilnummer VARCHAR(15) CHECK (mobilnummer ~ '^\+?[0-9]{8,15}$')
 - epost VARCHAR(200)
@@ -113,7 +113,7 @@ fornavn og etternavn: Hindrer at feltet kun består av en tom streng.
 Begrunnelse: 
 navn: Sikrer at stasjonnavnet ikke er en tom streng.
 
-3. Lås
+3. Laas
 - laas_id SERIAL
 - stasjon_id INT
   
@@ -148,7 +148,7 @@ belop: Leiebeløpet kan ikke være negativt, NULL tillates før beløpet er bere
 
 **ER-diagram:**
 
-[erDiagram
+erDiagram
 
     KUNDE ||--o{ UTLEIE : har
     SYKKEL ||--o{ UTLEIE : brukes_i
@@ -159,7 +159,7 @@ belop: Leiebeløpet kan ikke være negativt, NULL tillates før beløpet er bere
     STASJON ||--o{ UTLEIE : slutt
 
     KUNDE {
-        SERIAL kunde_id
+        SERIAL kunde_id PK
         VARCHAR(15) mobilnummer
         VARCHAR(200) epost
         VARCHAR(50) fornavn
@@ -167,32 +167,32 @@ belop: Leiebeløpet kan ikke være negativt, NULL tillates før beløpet er bere
     }
 
     STASJON {
-        SERIAL stasjon_id
+        SERIAL stasjon_id PK
         VARCHAR(100) navn
         TEXT adresse
     }
 
     LAAS {
-        SERIAL laas_id
-        INT stasjon_id
+        SERIAL laas_id PK
+        INT stasjon_id FK
     }
 
     SYKKEL {
-        SERIAL sykkel_id
-        INT stasjon_id
-        INT laas_id
+        SERIAL sykkel_id PK
+        INT stasjon_id FK
+        INT laas_id FK
     }
 
     UTLEIE {
-        SERIAL utleie_id
-        INT kunde_id
-        INT sykkel_id
+        SERIAL utleie_id PK
+        INT kunde_id FK
+        INT sykkel_id FK
         TIMESTAMP start_tid
         TIMESTAMP slutt_tid
         NUMERIC belop
-        INT start_stasjon_id
-        INT slutt_stasjon_id
-    }]
+        INT start_stasjon_id FK
+        INT slutt_stasjon_id FK
+    }
 
 ---
 
@@ -202,44 +202,111 @@ belop: Leiebeløpet kan ikke være negativt, NULL tillates før beløpet er bere
 
 [Skriv ditt svar her - forklar hvilke primærnøkler du har valgt for hver entitet og hvorfor]
 
-[1. Kunde 
-- kunde_id SERIAL
+1. Kunde 
+- kunde_id SERIAL PK
 - mobilnummer VARCHAR(15)
 - epost VARCHAR(200)
 - fornavn VARCHAR(50) 
 - etternavn VARCHAR(50)
   
 2. Stasjon
-- stasjon_id SERIAL 
+- stasjon_id SERIAL PK
 - navn VARCHAR(100)
 - adresse TEXT
   
 3. Lås
-- lås_id SERIAL
-- stasjon_id INT
+- lås_id SERIAL PK
+- stasjon_id INT FK
   
 4. Sykkel
-- sykkel_id SERIAL
-- stasjon_id INT
-- lås_id INT
+- sykkel_id SERIAL PK
+- stasjon_id INT FK
+- lås_id INT FK
   
 5. Utleie
-- utleie_id SERIAL
-- kunde_id INT
-- sykkel_id INT
-- start_tid TIMESTANP
+- utleie_id SERIAL PK
+- kunde_id INT FK
+- sykkel_id INT FK
+- start_tid TIMESTAMP
 - slutt_tid TIMESTAMP
 - beløp NUMERIC(10,2) 
-- start_stasjon_id INT 
-- slutt_stasjon_id INT]
+- start_stasjon_id INT FK
+- slutt_stasjon_id INT FK
+
+Begrunnelse: 
+For hver entitet er det valgt en primærnøkkel:
+- kunde_id: brukes som primærnøkkel fordi hver kunde må kunne identifiseres, mobilnummer og e-post kan endres, mens ID er stabil.
+- stasjon_id: identifiserer hver stasjon unikt, da stasjon navn kan endres.
+- laas_id: identifiserer hver lås.
+- sykkel_id: identifiserer hver sykkel unikt i systemet.
+- utleie_id: En kunde kan ha mange utleier over tid, derfor må hver utleie ha en egen identifikasjon. 
+
+Fremmednøklene er valgt når det refereres til en primærnøkkel i en annen tabell, som skaper kobling mellom data og sikrer referanseintegritet. 
+
+
 
 **Naturlige vs. surrogatnøkler:**
+Surrogatnøkler:
+- kunde_id
+- stasjon_id
+- laas_id
+- sykkel_id
+- utleie_id
 
-[Skriv ditt svar her - diskuter om du har brukt naturlige eller surrogatnøkler og hvorfor]
+Disse er surrogatnøkler fordi de ikke har noen naturlig betydning i den virkelige verden. De genereres automatisk av databasen og brukes kun for å kunne identifisere. De er stabile og endres ikke, noe som gjør dem godt egnet som primærnøkler.
+
+Naturlige nøkler:
+En naturlig nøkkel er en attributt som allerede finnes i virkeligheten og som kan identifisere en entitet unikt. Mobilnummer eller e-post er eksempler på attributter som kunne fungert som naturlige nøkler for kunde, siden de ofte er unike. Likevel kan kunder bytte e-post eller mobilnummer, dermed vil surrogatnøkkelen kunde_id vær en mer stabil identifikator. 
+
 
 **Oppdatert ER-diagram:**
 
-[Legg inn mermaid-kode eller eventuelt en bildefil fra `mermaid.live` her]
+erDiagram
+
+    KUNDE ||--o{ UTLEIE : har
+    SYKKEL ||--o{ UTLEIE : brukes_i
+    STASJON ||--o{ LAAS : har
+    STASJON ||--o{ SYKKEL : parkerer
+    LAAS ||--o| SYKKEL : laaser
+    STASJON ||--o{ UTLEIE : start
+    STASJON ||--o{ UTLEIE : slutt
+
+    KUNDE {
+        SERIAL kunde_id PK
+        VARCHAR(15) mobilnummer
+        VARCHAR(200) epost
+        VARCHAR(50) fornavn
+        VARCHAR(50) etternavn
+    }
+
+    STASJON {
+        SERIAL stasjon_id PK
+        VARCHAR(100) navn
+        TEXT adresse
+    }
+
+    LAAS {
+        SERIAL laas_id PK
+        INT stasjon_id FK
+    }
+
+    SYKKEL {
+        SERIAL sykkel_id PK
+        INT stasjon_id FK
+        INT laas_id FK
+    }
+
+    UTLEIE {
+        SERIAL utleie_id PK
+        INT kunde_id FK
+        INT sykkel_id FK
+        TIMESTAMP start_tid
+        TIMESTAMP slutt_tid
+        NUMERIC belop
+        INT start_stasjon_id FK
+        INT slutt_stasjon_id FK
+    }
+
 
 ---
 
@@ -249,13 +316,121 @@ belop: Leiebeløpet kan ikke være negativt, NULL tillates før beløpet er bere
 
 [Skriv ditt svar her - list opp alle forholdene mellom entitetene og angi kardinalitet]
 
+  KUNDE ||--o{ UTLEIE 
+  forhold: En kunde kan ha flere utleier
+  kardinalitet:  1:N
+  En kunde kan ha null eller mange utleier, mens hver utleie tilhører nøyaktig én kunde (relasjonen er en-til-mange)
+
+  SYKKEL ||--o{ UTLEIE
+  forhold: En sykkel kan leies ut flere ganger
+  kardinalitet: 1:N
+  En sykkel kan være knyttet til null eller mange utleier, mens hver utleie gjelder nøyaktig én sykkel (relasjonen er en-til-mange)
+
+  STASJON ||--|{ LAAS 
+  forhold: En stasjon har flere låser
+  kardinalitet: 1:N
+  Hver lås tilhører en bestemt stasjon (relasjonen er en-til-mange)
+  
+  STASJON |o--o{ SYKKEL
+  forhold: En stasjon kan ha 0 eller flere sykler parkert (0 hvis alle er utleid)
+  kardinalitet: 1:N
+  En sykkel kan kun være parkert på èn eller null stasjoner (relasjonen er en-til-mange)
+  
+  LAAS |o--o| SYKKEL
+  forhold: Èn lås kan kun holde èn eller null sykler om gangen
+  kardinalitet: 0..1 : 0..1
+  En sykkel kan være i null eller èn lås (relasjonen er valgfri èn-til-èn)
+  
+  STASJON ||--o{ UTLEIE : start
+  forhold: En stasjon kan være start_stasjon for null eller flere utleier
+  kardinalitet: 1:N
+  Hver utleie kan kun ha èn start_stasjon (relasjonen er en-til-mange)
+  
+  STASJON ||--o{ UTLEIE : slutt
+  forhold: En stasjon kan være slutt_stasjon for null eller flere utleier
+  kardinalitet: 1:N
+  Hver utleie kan kun ha èn slutt_stasjon (relasjonen er en-til-mange)
+
 **Fremmednøkler:**
 
-[Skriv ditt svar her - list opp alle fremmednøklene og forklar hvordan de implementerer forholdene]
+Fremmednøkler (FK) brukes for å koble tabeller sammen og implementere forholdene i ER-modellen. En fremmednøkkel i en tabell må peke til en eksisterende primærnøkkel i en annen tabell.
+
+Fremmednøkler:
+
+LAAS
+laas.stasjon_id (FK)→ stasjon.stasjon_id (PK)
+Implementerer forholdet stasjon-lås (1:N): En stasjon kan ha mange låser, og hver lås tilhører èn stasjon
+
+
+SYKKEL
+sykkel.stasjon_id (FK) → stasjon.stasjon_id (PK) (kan være null når sykkelen er utleid)
+Implementerer forholdet Stasjon–Sykkel (1:N): En stasjon kan ha 0 eller flere sykler, og en sykkel kan være knyttet til 0 eller 1 stasjon.
+
+sykkel.laas_id (FK) → laas.laas_id (PK) (kan være null når sykkelen er utleid)
+Implementerer forholdet Lås–Sykkel (0..1 : 0..1): En sykkel kan være låst i 0 eller 1 lås, og en lås kan holde 0 eller 1 sykkel.
+
+UTLEIE
+
+utleie.kunde_id (FK) → kunde.kunde_id (PK)
+Implementerer forholdet Kunde–Utleie (1:N): En kunde kan ha 0 eller flere utleier, og hver utleie tilhører nøyaktig én kunde.
+
+utleie.sykkel_id (FK) → sykkel.sykkel_id (PK)
+Implementerer forholdet Sykkel–Utleie (1:N): En sykkel kan ha 0 eller mange utleier over tid, og hver utleie gjelder nøyaktig én sykkel.
+
+utleie.start_stasjon_id (FK) → stasjon.stasjon_id (PK)
+Implementerer forholdet Stasjon–Utleie (start) (1:N): En stasjon kan være startstasjon for 0 eller flere utleier, og hver utleie har nøyaktig én startstasjon.
+
+utleie.slutt_stasjon_id (FK) → stasjon.stasjon_id (PK)
+Implementerer forholdet Stasjon–Utleie (slutt) (1:N): En stasjon kan være sluttstasjon for 0 eller flere utleier, og hver utleie har nøyaktig én sluttstasjon.
 
 **Oppdatert ER-diagram:**
 
-[Legg inn mermaid-kode eller eventuelt en bildefil fra `mermaid.live` her]
+erDiagram
+
+    KUNDE  ||--o{ UTLEIE : har
+    SYKKEL ||--o{ UTLEIE : brukes_i
+    STASJON ||--|{ LAAS : har
+    STASJON |o--o{ SYKKEL : parkerer
+    LAAS   |o--o| SYKKEL : laaser
+    STASJON ||--o{ UTLEIE : start
+    STASJON ||--o{ UTLEIE : slutt
+
+    KUNDE {
+        SERIAL kunde_id PK
+        VARCHAR mobilnummer
+        VARCHAR epost
+        VARCHAR fornavn
+        VARCHAR etternavn
+    }
+
+    STASJON {
+        SERIAL stasjon_id PK
+        VARCHAR navn
+        TEXT adresse
+    }
+
+    LAAS {
+        SERIAL laas_id PK
+        INT stasjon_id FK
+    }
+
+    SYKKEL {
+        SERIAL sykkel_id PK
+        INT stasjon_id FK
+        INT laas_id FK
+    }
+
+    UTLEIE {
+        SERIAL utleie_id PK
+        INT kunde_id FK
+        INT sykkel_id FK
+        TIMESTAMP start_tid
+        TIMESTAMP slutt_tid
+        NUMERIC belop
+        INT start_stasjon_id FK
+        INT slutt_stasjon_id FK
+    }
+
 
 ---
 
@@ -263,19 +438,21 @@ belop: Leiebeløpet kan ikke være negativt, NULL tillates før beløpet er bere
 
 **Vurdering av 1. normalform (1NF):**
 
-[Skriv ditt svar her - forklar om datamodellen din tilfredsstiller 1NF og hvorfor]
+Datamodellen tilfredsstiller første normalform (1NF) fordi alle tabellene inneholder atomiske verdier, det vil si at hver kolonne inneholder én enkelt verdi per rad. Det finnes ingen lister, gjentatte grupper eller flere verdier lagret i samme felt. For eksempel lagres hver utleie som en egen rad i tabellen UTLEIE, i stedet for å lagre flere sykkel-IDer i én kolonne hos Kunde. Tilsvarende lagres hver sykkel, lås og stasjon i egne rader i sine egne tabeller. Dermed tilfredsstiller datamodellen første normalform.
 
 **Vurdering av 2. normalform (2NF):**
 
-[Skriv ditt svar her - forklar om datamodellen din tilfredsstiller 2NF og hvorfor]
+For at datamodellen skal være i andre normalform (2NF), må alle ikke-nøkkel-attributter i tabellen avhenge av hele primærnøkkelen. I tabeller med sammensatt primærnøkkel betyr dette at ingen kolonner kan avhenge av bare én del av nøkkelen. Alle primærnøklene i datamodellen består kun av èn kolonne, siden modellen ikke bruker sammensatte primærnøkler, kan det ikke oppstå slike avhengigheter. Dermed tilfredstiller datamodellen andre normalform. 
 
 **Vurdering av 3. normalform (3NF):**
 
-[Skriv ditt svar her - forklar om datamodellen din tilfredsstiller 3NF og hvorfor]
+For at datamodellen skal være i tredje normalform (3NF), må ingen ikke-nøkkel-attributter være avhengige av andre ikke-nøkkel-attributter. Med andre ord skal attributtene kun være avhengige av primærnøklene. Alle ikke-nøkkel-attributtene i tabellen avhenger kun av primærnøkler. For eksempel vil ikke attributtene adresse avhenge av navn i entiteten STASJON.
+
+
 
 **Eventuelle justeringer:**
 
-[Skriv ditt svar her - hvis modellen ikke var på 3NF, forklar hvilke justeringer du har gjort]
+Modellen er på 3NF
 
 ---
 
