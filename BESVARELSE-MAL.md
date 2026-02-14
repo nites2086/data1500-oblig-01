@@ -314,7 +314,6 @@ erDiagram
 
 **Identifiserte forhold og kardinalitet:**
 
-[Skriv ditt svar her - list opp alle forholdene mellom entitetene og angi kardinalitet]
 
   KUNDE ||--o{ UTLEIE 
   forhold: En kunde kan ha flere utleier
@@ -471,6 +470,55 @@ Modellen er på 3NF
 - Sykkelstasjoner: [antall]
 - Låser: [antall]
 - Utleier: [antall]
+
+docker exec -it data1500-postgres psql -U admin -d oblig01
+
+psql (15.15)
+Type "help" for help.
+
+oblig01=# SELECT tablename
+oblig01-# FROM pg_catalog.pg_tables
+oblig01-# WHERE schemaname = 'public'
+oblig01-# ORDER BY tablename;
+ tablename 
+-----------
+ kunde
+ laas
+ stasjon
+ sykkel
+ utleie
+(5 rows)
+
+oblig01=# 
+oblig01=# SELECT COUNT(*) AS antall_kunder   FROM kunde;
+ antall_kunder 
+---------------
+             5
+(1 row)
+
+oblig01=# SELECT COUNT(*) AS antall_stasjoner FROM stasjon;
+ antall_stasjoner 
+------------------
+                5
+(1 row)
+
+oblig01=# SELECT COUNT(*) AS antall_laas     FROM laas;
+ antall_laas 
+-------------
+         100
+(1 row)
+
+oblig01=# SELECT COUNT(*) AS antall_sykler   FROM sykkel;
+ antall_sykler 
+---------------
+           100
+(1 row)
+
+oblig01=# SELECT COUNT(*) AS antall_utleier  FROM utleie;
+ antall_utleier 
+----------------
+             50
+(1 row)
 
 ---
 
