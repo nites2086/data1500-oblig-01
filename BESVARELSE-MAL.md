@@ -461,27 +461,44 @@ Modellen er på 3NF
 
 **Plassering av SQL-skript:**
 
-[Bekreft at du har lagt SQL-skriptet i `init-scripts/01-init-database.sql`]
+SQL-skriptet er lagt i init-scripts/01-init-database.sql og kjøres automatisk ved oppstart av PostgreSQL via docker-compose.
 
 **Antall testdata:**
 
-- Kunder: [antall]
-- Sykler: [antall]
-- Sykkelstasjoner: [antall]
-- Låser: [antall]
-- Utleier: [antall]
+- Kunder: 5
+- Sykler: 100
+- Sykkelstasjoner: 5
+- Låser: 100
+- Utleier: 50
 
+
+
+### Oppgave 2.2: Kjøre initialiseringsskriptet
+
+**Dokumentasjon av vellykket kjøring:**
+
+Databasen ble startet med:
+docker compose up
+
+Deretter ble det koblet til databasen med:
 docker exec -it data1500-postgres psql -U admin -d oblig01
 
-psql (15.15)
-Type "help" for help.
+Tabellene og dataene ble verifisert uten feil.
 
-oblig01=# SELECT tablename
-oblig01-# FROM pg_catalog.pg_tables
-oblig01-# WHERE schemaname = 'public'
-oblig01-# ORDER BY tablename;
- tablename 
------------
+Videre brukte jeg denne: 
+
+```sql
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+  AND table_type = 'BASE TABLE'
+ORDER BY table_name;
+```
+
+og fikk dette resultatet:
+
+ table_name 
+------------
  kunde
  laas
  stasjon
@@ -489,8 +506,17 @@ oblig01-# ORDER BY tablename;
  utleie
 (5 rows)
 
-oblig01=# 
-oblig01=# SELECT COUNT(*) AS antall_kunder   FROM kunde;
+For å dokumentere at tabellene ble opprettet korrekt, kjørte jeg følgende spørring mot systemkatalogen i PostgreSQL:
+
+SELECT COUNT(*) AS antall_kunder   FROM kunde;
+SELECT COUNT(*) AS antall_stasjoner FROM stasjon;
+SELECT COUNT(*) AS antall_laas     FROM laas;
+SELECT COUNT(*) AS antall_sykler   FROM sykkel;
+SELECT COUNT(*) AS antall_utleier  FROM utleie;
+
+og fikk dette resultatet:
+
+SELECT COUNT(*) AS antall_kunder   FROM kunde;
  antall_kunder 
 ---------------
              5
@@ -520,31 +546,7 @@ oblig01=# SELECT COUNT(*) AS antall_utleier  FROM utleie;
              50
 (1 row)
 
----
 
-### Oppgave 2.2: Kjøre initialiseringsskriptet
-
-**Dokumentasjon av vellykket kjøring:**
-
-[Skriv ditt svar her - f.eks. skjermbilder eller output fra terminalen som viser at databasen ble opprettet uten feil]
-
-**Spørring mot systemkatalogen:**
-
-```sql
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
-  AND table_type = 'BASE TABLE'
-ORDER BY table_name;
-```
-
-**Resultat:**
-
-```
-[Skriv resultatet av spørringen her - list opp alle tabellene som ble opprettet]
-```
-
----
 
 ## Del 3: Tilgangskontroll
 
@@ -553,20 +555,24 @@ ORDER BY table_name;
 **SQL for å opprette rolle:**
 
 ```sql
-[Skriv din SQL-kode for å opprette rollen 'kunde' her]
+
+CREATE ROLE kunde;
 ```
 
 **SQL for å opprette bruker:**
 
 ```sql
-[Skriv din SQL-kode for å opprette brukeren 'kunde_1' her]
+CREATE USER kunde_1 WITH PASSWORD 'sykkel123';
 ```
 
 **SQL for å tildele rettigheter:**
 
 ```sql
-[Skriv din SQL-kode for å tildele rettigheter til rollen her]
+GRANT kunde TO kunde_1;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO kunde;
 ```
+
+Rollen kunde ble opprettet og gitt SELECT-rettigheter på alle tabeller i public-skjemaet. Brukeren kunde_1 ble opprettet og tildelt rollen kunde, og har dermed kun lesetilgang til databasen.
 
 ---
 
@@ -575,12 +581,19 @@ ORDER BY table_name;
 **SQL for VIEW:**
 
 ```sql
-[Skriv din SQL-kode for VIEW her]
+CREATE OR REPLACE VIEW mine_utleier AS
+SELECT *
+FROM utleie
+WHERE kunde_id = current_setting('app.kunde_id', true)::int;
+
+GRANT SELECT ON mine_utleier TO kunde;
+REVOKE SELECT ON utleie FROM kunde;
+
 ```
 
 **Ulempe med VIEW vs. POLICIES:**
 
-[Skriv ditt svar her - diskuter minst én ulempe med å bruke VIEW for autorisasjon sammenlignet med POLICIES]
+VIEW gir ikke automatisk radnivå-sikkerhet. Hvis brukeren fortsatt har SELECT på utleie kan viewet omgås ved å spørre tabellen direkte. Med POLICY hådheves begrensningen på tabellen uansett hvilke spørringer som kjøres. 
 
 ---
 
@@ -595,16 +608,68 @@ ORDER BY table_name;
 - Lavsesong (desember-februar): 500 utleier/måned
 
 **Totalt antall utleier per år:**
+Høysesong: 5 måneder
+Mellomsesong: 4 måneder
+Lavsesong: 3 måneder
 
-[Skriv din utregning her]
+20 000 x 5 = 100 000
+5000 x 4 = 20 000
+500 x 3 = 1500
+
+100 000 + 20 000 + 1500 = 121 500
+
+Det er totalt 121 500 utleier per år. 
+
 
 **Estimat for lagringskapasitet:**
 
-[Skriv din utregning her - vis hvordan du har beregnet lagringskapasiteten for hver tabell]
+For VARCHAR og TEXT har jeg antatt en gjennomsnittlig tekstlengde for å kunne estimere lagringsbehovet.
+
+
+
+UTLEIE
+5 stk INT (utleie_id, kunde_id, sykkel_id, start_stasjon_id, slutt_stasjon_id): 5 x 4 bytes = 20 B
+2  stk TIMESTAMP: 2 x 8 bytes = 16 B
+1 stk NUMERIC(10,2): 1 x 16 bytes = 16 B
+
+20 + 16 + 16 = 52 B pr utleie
+
+tabellstørrelse:
+
+121 500 x 52 B = 6 318 000 B = 6.3 MB
+
+SYKKEL (100 rader)
+3 stk INT (sykkel_id, laas_id, stasjon_id): 3 x 4 bytes = 12 B 
+100 x 12 B = 1200 B = 0.0012 MB
+
+LAAS (100 rader)
+2 stk INT (laas_id, stasjon_id): 2 x 4 bytes = 8 bytes
+100 x 8 B = 800 B = 0.0008 MB
+
+STASJON (5 rader)
+INT stasjon_id: 4 B
+VARCHAR navn: 20 B
+TEXT adresse: 30 B
+
+4 + 20 + 30 = 54 B
+5 x 54 B = 270 B = 0.00027 MB
+
+KUNDE (Antar 10 000 kunder)
+INT kunde_id: 4 B
+VARCHAR mobilnummer: 15 B
+VARCHAR epost: 25 B
+VARCHAR fornavn: 10 B
+VARCHAR etternavn: 12 B
+
+4 + 15 + 25 + 10 + 12 = 66 B
+10 000 x 66 B = 660 000 B = 0.66 MB
+
 
 **Totalt for første år:**
 
-[Skriv ditt estimat her]
+6.3 MB + 0.0012 MB + 0.0008 MB + 0.00027 MB + 0.66 MB ≈ 7 MB
+
+UTLEIE-tabellen utgjør den klart største delen av lagringsbehovet. De øvrige tabellene bidrar svært lite til total lagringskapasitet første driftsår.
 
 ---
 
